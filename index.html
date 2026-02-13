@@ -2,67 +2,109 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Library Manager App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- CSS -->
     <link rel="stylesheet" href="style.css">
-    
+
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    
+
+    <!-- QR Scanner -->
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
+
 <body>
 
-    <div class="container">
-        <div id="loginSection" class="card" style="display:none;">
-            <h1>Library Portal</h1>
-            <p>Google se login karke shuru karein</p>
-            <button onclick="loginWithGoogle()" class="google-btn">Continue with Google</button>
-        </div>
+<div class="container">
 
-        <div id="adminPanel" class="section" style="display:none;">
-            <header>
-                <h2>Admin Panel</h2>
-                <button onclick="logout()" class="logout-btn">Logout</button>
-            </header>
-            <div class="card">
-                <h3>Student Add Karein</h3>
-                <input type="text" id="studentName" placeholder="Student ka Naam">
-                <input type="email" id="studentEmail" placeholder="Student ki Email">
-                <select id="feeStatus">
-                    <option value="Paid">Paid</option>
-                    <option value="Unpaid">Unpaid</option>
-                </select>
-                <button onclick="addStudent()">Add Student</button>
-            </div>
-            <div class="card">
-                <h3>Student List</h3>
-                <table border="1" width="100%">
-                    <thead>
-                        <tr><th>Naam</th><th>Status</th><th>Action</th></tr>
-                    </thead>
-                    <tbody id="studentListBody"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="studentPanel" class="section" style="display:none;">
-            <header>
-                <h2>Student Dashboard</h2>
-                <button onclick="logout()" class="logout-btn">Logout</button>
-            </header>
-            <div class="card stats-card">
-                <h3 id="feeDisplay">Checking Status...</h3>
-            </div>
-            <div class="card">
-                <h3>Scan QR to Check-in</h3>
-                <div id="reader"></div>
-                <button onclick="startScanner()" class="scan-btn">Start Camera</button>
-            </div>
-        </div>
+    <!-- ================= LOGIN SECTION ================= -->
+    <div id="loginSection" class="card" style="display:none;">
+        <h1>📚 Library Portal</h1>
+        <p>Login with Google to continue</p>
+        <button onclick="loginWithGoogle()" class="primary-btn">
+            Continue with Google
+        </button>
     </div>
 
-    <script src="script.js"></script>
+
+    <!-- ================= ADMIN PANEL ================= -->
+    <div id="adminPanel" class="section" style="display:none;">
+
+        <div class="header">
+            <h2>👑 Admin Panel</h2>
+            <button onclick="logout()" class="danger-btn">Logout</button>
+        </div>
+
+        <!-- Add Student -->
+        <div class="card">
+            <h3>Add Student</h3>
+
+            <input type="text" id="studentName" placeholder="Student Name">
+            <input type="email" id="studentEmail" placeholder="Student Email">
+
+            <select id="feeStatus">
+                <option value="Paid">Paid</option>
+                <option value="Unpaid">Unpaid</option>
+            </select>
+
+            <button onclick="addStudent()" class="primary-btn">
+                Add Student
+            </button>
+        </div>
+
+        <!-- Student List -->
+        <div class="card">
+            <h3>Student List</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Fee Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="studentListBody"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+    <!-- ================= STUDENT PANEL ================= -->
+    <div id="studentPanel" class="section" style="display:none;">
+
+        <div class="header">
+            <h2>🎓 Student Dashboard</h2>
+            <button onclick="logout()" class="danger-btn">Logout</button>
+        </div>
+
+        <!-- Fee Status -->
+        <div class="card">
+            <h3 id="feeDisplay">Checking Fee Status...</h3>
+        </div>
+
+        <!-- QR Scanner -->
+        <div class="card">
+            <h3>Scan QR to Mark Attendance</h3>
+
+            <div id="reader" style="width:100%;"></div>
+
+            <button onclick="startScanner()" class="primary-btn">
+                Start Camera
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- MAIN SCRIPT -->
+<script src="script.js"></script>
+
 </body>
 </html>
