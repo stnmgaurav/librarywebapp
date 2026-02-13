@@ -1,31 +1,29 @@
 // ================= FIREBASE CONFIG =================
 const firebaseConfig = {
-  apiKey: "AIzaSyDf1kBSxrMAn84T2fyt5ipc7GZ3iMSA7hg",
-  authDomain: "librarywebapp-e65ac.firebaseapp.com",
-  projectId: "librarywebapp-e65ac",
-  storageBucket: "librarywebapp-e65ac.firebasestorage.app",
-  messagingSenderId: "710619179809",
-  appId: "1:710619179809:web:6d130adbca76669f226c60"
+    apiKey: "AIzaSyDf1kBSxrMAn84T2fyt5ipc7GZ3iMSA7hg",
+    authDomain: "librarywebapp-e65ac.firebaseapp.com",
+    projectId: "librarywebapp-e65ac",
+    storageBucket: "librarywebapp-e65ac.firebasestorage.app",
+    messagingSenderId: "710619179809",
+    appId: "1:710619179809:web:6d130adbca76669f226c60"
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.firestore();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
 let html5QrCode;
 
-
-// ================= LOGIN =================
+// ================= LOGIN & AUTH =================
 
 function loginWithGoogle() {
-    auth.signInWithPopup(provider)
-        .catch(error => console.error(error));
+    auth.signInWithPopup(provider).catch(error => alert(error.message));
 }
 
 auth.onAuthStateChanged((user) => {
     if (user) {
+        document.getElementById('userWelcome').innerText = `Hi, ${user.displayName.split(' ')[0]}!`;
         handleUser(user);
     } else {
         showLogin();
@@ -36,327 +34,178 @@ function showLogin() {
     document.getElementById('loginSection').style.display = 'block';
     document.getElementById('adminPanel').style.display = 'none';
     document.getElementById('studentPanel').style.display = 'none';
+    document.getElementById('userWelcome').innerText = "";
 }
 
-
-// ================= USER HANDLE =================
-
 function handleUser(user) {
-
     const userRef = db.collection("users").doc(user.uid);
 
     userRef.get().then((doc) => {
-
-        // ADMIN EMAIL
         if (user.email === "gauravsinghrajpoot2019@gmail.com") {
-
             if (!doc.exists) {
                 userRef.set({
-                    name: user.displayName,
-                    email: user.email,
-                    mobile: "",
-                    role: "Admin",
-                    approved: true,
-                    fee_status: "Paid",
-                    uid: user.uid,
+                    name: user.displayName, email: user.email, role: "Admin",
+                    approved: true, fee_status: "Paid", uid: user.uid,
                     created_at: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => loadAdminPanel());
-            } else {
-                loadAdminPanel();
-            }
-
+            } else { loadAdminPanel(); }
         } else {
-
             if (!doc.exists) {
-
                 userRef.set({
-                    name: user.displayName,
-                    email: user.email,
-                    mobile: "",
-                    role: "Student",
-                    approved: false,
-                    fee_status: "Unpaid",
-                    uid: user.uid,
-                    created_at: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    loadStudentPanel({
-                        approved: false,
-                        fee_status: "Unpaid"
-                    });
-                });
-
-            } else {
-                loadStudentPanel(doc.data());
-            }
+                    name: user.displayName, email: user.email, mobile: "",
+                    role: "Student", approved: false, fee_status: "Unpaid",
+                    uid: user.uid, created_at: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => loadStudentPanel({ approved: false, fee_status: "Unpaid" }));
+            } else { loadStudentPanel(doc.data()); }
         }
     });
 }
 
-
-// ================= ADMIN PANEL =================
+// ================= ADMIN LOGIC =================
 
 function loadAdminPanel() {
-
     document.getElementById('loginSection').style.display = 'none';
     document.getElementById('studentPanel').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
-
     loadStudents();
     loadTodayPresentCount();
 }
 
 function loadStudents() {
-
     const tableBody = document.getElementById("studentListBody");
     tableBody.innerHTML = "";
-
-    db.collection("users")
-      .where("role", "==", "Student")
-      .get()
-      .then((snapshot) => {
-
-          snapshot.forEach((doc) => {
-
-              const data = doc.data();
-
-              const row = `
+    db.collection("users").where("role", "==", "Student").get().then((snapshot) => {
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const row = `
                 <tr>
                     <td>${data.name}</td>
-                    <td>
-                        <input type="text" id="mobile-${doc.id}"
-                               value="${data.mobile || ''}"
-                               placeholder="Mobile Number">
-                    </td>
+                    <td><input type="text" id="mobile-${doc.id}" value="${data.mobile || ''}" style="width:80px"></td>
                     <td>
                         <select id="fee-${doc.id}">
                             <option value="Paid" ${data.fee_status === "Paid" ? "selected" : ""}>Paid</option>
                             <option value="Unpaid" ${data.fee_status === "Unpaid" ? "selected" : ""}>Unpaid</option>
                         </select>
                     </td>
-                    <td>
-                        <button onclick="approveStudent('${doc.id}')">
-                            ${data.approved ? "Update" : "Approve"}
-                        </button>
-                    </td>
-                </tr>
-              `;
-
-              tableBody.innerHTML += row;
-          });
-
-      });
-}
-
-function approveStudent(uid) {
-
-    const mobileValue = document.getElementById("mobile-" + uid).value;
-    const feeValue = document.getElementById("fee-" + uid).value;
-
-    if (!mobileValue) {
-        alert("Enter mobile number");
-        return;
-    }
-
-    db.collection("users").doc(uid).update({
-        mobile: mobileValue,
-        approved: true,
-        fee_status: feeValue
-    }).then(() => {
-        alert("Student Updated ✅");
-        loadStudents();
+                    <td><button onclick="approveStudent('${doc.id}')" class="mini-btn">Save</button></td>
+                </tr>`;
+            tableBody.innerHTML += row;
+        });
     });
 }
 
-function loadTodayPresentCount() {
-
-    const today = new Date().toISOString().split("T")[0];
-
-    db.collection("attendance")
-      .where("date", "==", today)
-      .where("checkOut", "!=", "")
-      .get()
-      .then(snapshot => {
-          document.getElementById("totalPresent").innerText =
-              "Total Present Today: " + snapshot.size;
-      });
+function approveStudent(uid) {
+    const mobileValue = document.getElementById("mobile-" + uid).value;
+    const feeValue = document.getElementById("fee-" + uid).value;
+    db.collection("users").doc(uid).update({
+        mobile: mobileValue, approved: true, fee_status: feeValue
+    }).then(() => { alert("Updated!"); loadStudents(); });
 }
 
+function loadTodayPresentCount() {
+    const today = new Date().toISOString().split("T")[0];
+    db.collection("attendance").where("date", "==", today).where("checkOut", "!=", "").get()
+      .then(snap => document.getElementById("totalPresent").innerText = "Total Present Today: " + snap.size);
+}
 
-// ================= STUDENT PANEL =================
+// ================= STUDENT LOGIC =================
 
 function loadStudentPanel(userData) {
-
     document.getElementById('loginSection').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'none';
     document.getElementById('studentPanel').style.display = 'block';
 
     const feeText = document.getElementById("feeDisplay");
-    const scanner = document.getElementById("reader");
+    const scanBtn = document.getElementById("startScanBtn");
+    const statusIcon = document.getElementById("statusIcon");
 
     if (!userData.approved) {
-
-        feeText.innerText = "Waiting for admin approval ❌";
-        scanner.style.display = "none";
-
+        statusIcon.innerHTML = '<i class="fas fa-clock" style="color:#f59e0b; font-size:40px;"></i>';
+        feeText.innerText = "Waiting for admin approval";
+        scanBtn.style.display = "none";
     } else if (userData.fee_status !== "Paid") {
-
-        feeText.innerText = "Please pay fees to mark attendance ❌";
-        scanner.style.display = "none";
-
+        statusIcon.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ef4444; font-size:40px;"></i>';
+        feeText.innerText = "Please pay fees to scan";
+        scanBtn.style.display = "none";
     } else {
-
-        feeText.innerText = "Fees Paid ✅ You can mark attendance";
-        scanner.style.display = "block";
-
-        const user = auth.currentUser;
-        if (user) {
-            loadTodayHours(user.uid);
-            loadHistory(user.uid);
-        }
+        statusIcon.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981; font-size:40px;"></i>';
+        feeText.innerText = "Fees Paid ✅";
+        scanBtn.style.display = "block";
+        loadTodayHours(auth.currentUser.uid);
+        loadHistory(auth.currentUser.uid);
     }
 }
 
-
-// ================= QR ATTENDANCE =================
+// ================= QR SCANNER =================
 
 function startScanner() {
-
-    const user = auth.currentUser;
-    if (!user) return;
-
+    document.getElementById("startScanBtn").style.display = "none";
     html5QrCode = new Html5Qrcode("reader");
-
     html5QrCode.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
-        () => {
-            markAttendance(user.uid);
+        (decodedText) => {
+            if(decodedText === "LIBRARY_ENTRY") {
+                window.navigator.vibrate(200); // Haptic feedback
+                markAttendance(auth.currentUser.uid);
+            } else {
+                alert("Wrong QR Code!");
+            }
         }
-    );
+    ).catch(err => alert("Camera Error: " + err));
 }
 
 function markAttendance(uid) {
-
     const today = new Date();
     const dateString = today.toISOString().split("T")[0];
-    const timeString = today.toLocaleTimeString();
+    const timeString = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    db.collection("attendance")
-      .where("uid", "==", uid)
-      .where("date", "==", dateString)
-      .get()
-      .then((snapshot) => {
-
-          if (snapshot.empty) {
-
-              db.collection("attendance").add({
-                  uid: uid,
-                  date: dateString,
-                  checkIn: timeString,
-                  checkOut: "",
-                  totalHours: "",
-                  created_at: firebase.firestore.FieldValue.serverTimestamp()
-              }).then(() => {
-                  alert("Check-In Successful ✅");
-                  stopScanner();
-                  loadTodayHours(uid);
-                  loadHistory(uid);
-              });
-
-          } else {
-
-              const doc = snapshot.docs[0];
-              const data = doc.data();
-
-              if (!data.checkOut) {
-
-                  const checkInTime = new Date(`${dateString} ${data.checkIn}`);
-                  const checkOutTime = new Date();
-
-                  const diffMs = checkOutTime - checkInTime;
-                  const hours = (diffMs / (1000 * 60 * 60)).toFixed(2);
-
-                  db.collection("attendance").doc(doc.id).update({
-                      checkOut: timeString,
-                      totalHours: hours
-                  }).then(() => {
-                      alert("Check-Out Successful ✅");
-                      stopScanner();
-                      loadTodayHours(uid);
-                      loadHistory(uid);
-                  });
-
-              } else {
-                  alert("Attendance already completed today ✅");
-                  stopScanner();
-              }
-          }
-      });
+    db.collection("attendance").where("uid", "==", uid).where("date", "==", dateString).get().then((snapshot) => {
+        if (snapshot.empty) {
+            db.collection("attendance").add({
+                uid: uid, date: dateString, checkIn: timeString, checkOut: "", totalHours: "",
+                created_at: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => { alert("Check-In Success!"); stopScanner(); location.reload(); });
+        } else {
+            const doc = snapshot.docs[0];
+            if (!doc.data().checkOut) {
+                const checkInTime = new Date(`${dateString} ${doc.data().checkIn}`);
+                const diffMs = new Date() - checkInTime;
+                const hours = (diffMs / (1000 * 60 * 60)).toFixed(2);
+                db.collection("attendance").doc(doc.id).update({
+                    checkOut: timeString, totalHours: hours
+                }).then(() => { alert("Check-Out Success!"); stopScanner(); location.reload(); });
+            } else { alert("Already Done Today!"); stopScanner(); }
+        }
+    });
 }
 
 function stopScanner() {
     if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-            html5QrCode.clear();
-        });
+        html5QrCode.stop().then(() => html5QrCode.clear());
+        document.getElementById("startScanBtn").style.display = "block";
     }
 }
 
-
-// ================= STUDENT HISTORY =================
-
 function loadTodayHours(uid) {
-
     const today = new Date().toISOString().split("T")[0];
-
-    db.collection("attendance")
-      .where("uid", "==", uid)
-      .where("date", "==", today)
-      .get()
-      .then(snapshot => {
-
-          if (!snapshot.empty) {
-              const data = snapshot.docs[0].data();
-
-              document.getElementById("todayHours").innerText =
-                  `Today: ${data.checkIn || "-"} → ${data.checkOut || "-"} | Hours: ${data.totalHours || "In Progress"}`;
-          }
-      });
+    db.collection("attendance").where("uid", "==", uid).where("date", "==", today).get().then(snap => {
+        if (!snap.empty) {
+            const d = snap.docs[0].data();
+            document.getElementById("todayHours").innerText = `Today: ${d.checkIn} - ${d.checkOut || 'Active'} | ${d.totalHours || '0'} hrs`;
+        }
+    });
 }
 
 function loadHistory(uid) {
-
     const table = document.getElementById("historyBody");
     table.innerHTML = "";
-
-    db.collection("attendance")
-      .where("uid", "==", uid)
-      .orderBy("created_at", "desc")
-      .limit(10)
-      .get()
-      .then(snapshot => {
-
-          snapshot.forEach(doc => {
-
-              const data = doc.data();
-
-              const row = `
-                <tr>
-                  <td>${data.date}</td>
-                  <td>${data.checkIn || "-"}</td>
-                  <td>${data.checkOut || "-"}</td>
-                  <td>${data.totalHours || "-"}</td>
-                </tr>
-              `;
-
-              table.innerHTML += row;
-          });
-      });
+    db.collection("attendance").where("uid", "==", uid).orderBy("created_at", "desc").limit(10).get().then(snap => {
+        snap.forEach(doc => {
+            const d = doc.data();
+            table.innerHTML += `<tr><td>${d.date.slice(5)}</td><td>${d.checkIn}</td><td>${d.checkOut || '-'}</td><td>${d.totalHours || '-'}</td></tr>`;
+        });
+    });
 }
 
-
-// ================= LOGOUT =================
-
-function logout() {
-    auth.signOut().then(() => location.reload());
-}
+function logout() { auth.signOut().then(() => location.reload()); }
