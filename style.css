@@ -1,0 +1,7 @@
+body { font-family: sans-serif; background: #f4f4f9; padding: 20px; }
+.card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
+input, select, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; }
+.google-btn { background: #4285F4; color: white; cursor: pointer; }
+.logout-btn { background: #ff4444; color: white; width: auto; }
+.stats-card { background: #e3f2fd; color: #0d47a1; }
+#reader { width: 100%; max-width: 400px; margin: auto; }
