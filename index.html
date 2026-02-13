@@ -1,103 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Library QR Attendance</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library QR Attendance</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-  <!-- Firebase v8 (Important: script.js isi format me hai) -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
-  <!-- QR Scanner -->
-  <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 
 <body>
 
-  <h2 style="text-align:center;">Library Attendance System</h2>
+    <div class="header">
+        <h2>Library Pro</h2>
+        <p id="userWelcome"></p>
+    </div>
 
-  <!-- ================= LOGIN SECTION ================= -->
-  <div id="loginSection" class="card">
-      <button class="google-btn" onclick="loginWithGoogle()">
-          Login with Google
-      </button>
-  </div>
+    <div id="loginSection" class="card">
+        <div class="icon-circle"><i class="fas fa-user-lock"></i></div>
+        <h3>Welcome Back</h3>
+        <p>Please login to mark your attendance</p>
+        <button class="google-btn" onclick="loginWithGoogle()">
+            <i class="fab fa-google"></i> Login with Google
+        </button>
+    </div>
 
+    <div id="adminPanel" style="display:none; width: 100%; max-width: 600px;">
+        <div class="card stats-card">
+            <h3 id="totalPresent">Total Present Today: 0</h3>
+        </div>
 
-  <!-- ================= ADMIN PANEL ================= -->
-  <div id="adminPanel" style="display:none;">
+        <div class="card">
+            <h3 style="margin-bottom:15px;">Student Management</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Mobile</th>
+                            <th>Fees</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentListBody"></tbody>
+                </table>
+            </div>
+        </div>
 
-      <div class="card stats-card">
-          <h3 id="totalPresent">Total Present Today: 0</h3>
-      </div>
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
 
-      <div class="card">
-          <h3>Students List</h3>
+    <div id="studentPanel" style="display:none; width: 100%; max-width: 500px;">
+        
+        <div class="card">
+            <div id="statusIcon"></div>
+            <h3 id="feeDisplay" style="margin: 10px 0;"></h3>
+            
+            <button id="startScanBtn" class="primary-btn" onclick="startScanner()" style="display:none;">
+                <i class="fas fa-qrcode"></i> Open QR Scanner
+            </button>
+            
+            <div id="reader"></div>
+        </div>
 
-          <table width="100%" border="1" cellpadding="8">
-              <thead>
-                  <tr>
-                      <th>Name</th>
-                      <th>Mobile</th>
-                      <th>Fee Status</th>
-                      <th>Action</th>
-                  </tr>
-              </thead>
-              <tbody id="studentListBody"></tbody>
-          </table>
-      </div>
+        <div class="card stats-card">
+            <p id="todayHours" style="font-weight: 600; margin:0;">Today: -</p>
+        </div>
 
-      <div class="card">
-          <button class="logout-btn" onclick="logout()">Logout</button>
-      </div>
+        <div class="card">
+            <h3 style="margin-bottom:15px;"><i class="fas fa-history"></i> Attendance History</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>In</th>
+                            <th>Out</th>
+                            <th>Hrs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </div>
 
-  </div>
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
 
-
-  <!-- ================= STUDENT PANEL ================= -->
-  <div id="studentPanel" style="display:none;">
-
-      <div class="card">
-          <h3 id="feeDisplay"></h3>
-      </div>
-
-      <div class="card">
-          <h3>Scan QR Code</h3>
-          <div id="reader"></div>
-      </div>
-
-      <div class="card stats-card">
-          <h3 id="todayHours">Today: -</h3>
-      </div>
-
-      <div class="card">
-          <h3>Last 10 Days History</h3>
-
-          <table width="100%" border="1" cellpadding="8">
-              <thead>
-                  <tr>
-                      <th>Date</th>
-                      <th>Check In</th>
-                      <th>Check Out</th>
-                      <th>Hours</th>
-                  </tr>
-              </thead>
-              <tbody id="historyBody"></tbody>
-          </table>
-      </div>
-
-      <div class="card">
-          <button class="logout-btn" onclick="logout()">Logout</button>
-      </div>
-
-  </div>
-
-
-  <!-- Main Script -->
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 
 </body>
 </html>
